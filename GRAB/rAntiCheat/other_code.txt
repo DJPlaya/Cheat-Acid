@@ -1,0 +1,308 @@
+/*public Player_PreThink( id ) {
+	if( !is_user_alive( id ) )
+		return;
+	
+	static buttons, oldbuttons;
+	buttons = pev( id, pev_button );
+	oldbuttons = pev( id, pev_oldbuttons );
+	*/
+	// Bhop detection
+	
+	
+	
+	
+	/*static bhopdet[33];
+	
+	if( buttons & IN_JUMP && !( oldbuttons & IN_JUMP ) && olderjump[id] && !evenolderjump[id] && evenevenolderjump[id] && !evenevenevenolderjump[id] ) {
+		if( ++bhopdet[id] > 4 ) {
+			bhopdet[id] = 0;
+			ColorChat(0, NORMAL, "[^x03rAnti-Cheat^x01] Bhop hack detected!" );
+		}
+	} else if( !( buttons & IN_JUMP ) && !( oldbuttons & IN_JUMP ) && !olderjump[id] && !evenolderjump[id] && !evenevenolderjump[id] && !evenevenevenolderjump[id] && bhopdet[id] <= 3 )
+		bhopdet[id] = 0;*/
+
+	// ------------------------------------
+	
+	// Gstrafe detection
+	
+	/*static ducks[33], oldducks[33], tick[33];
+	
+	if( distance_to_ground( id ) < 17.999 && buttons & IN_DUCK ) {
+		++ducks[id];
+		tick[id] = 0;
+	}
+	
+	if( ++tick[id] > 4 && ducks[id] > 1 && oldducks[id] > 1	) {
+		if( ducks[id] == oldducks[id] ) {
+			if( ++gstrafe1det[id] > 30 ) {
+				gstrafe1det[id] = 0;
+				ColorChat(0, NORMAL, "[^x03rAnti-Cheat^x01] gstrafe hack detected!" );
+			}
+		} else {
+			gstrafe1det[id] = 0;
+		}
+		ducks[id] = 0;
+	}
+	
+	if( ducks[id] > 150 ) {
+		if( ++gstrafe12det[id] > 2 ) {
+			gstrafe12det[id] = 0;
+			ColorChat(0, NORMAL, "[^x03rAnti-Cheat^x01] gstrafe hack detected!" );
+		}
+		ducks[id] = 0;
+	}
+	
+	oldducks[id] = ducks[id];*/
+	
+	/*static ducksperperiod[33], tick[33], oldducksperperiod[33];
+	
+	if( !( pev( id, pev_flags ) & FL_ONGROUND ) ) {
+		if( buttons & IN_DUCK || oldbuttons & IN_DUCK && distance_to_ground( id ) > 17.9 ) {
+			++ducksperperiod[id];
+			tick[id] = 0;
+		}
+		
+		if( ++tick[id] > 4 && ducksperperiod[id] && oldducksperperiod[id] ) {
+			if( ducksperperiod[id] + 1 == oldducksperperiod[id] ) {
+				if( ++gstrafe1det[id] > 20 ) {
+					gstrafe1det[id] = 0;
+					ColorChat(0, NORMAL, "[^x03rAnti-Cheat^x01] gstrafe hack detected!" );
+				}
+				ducksperperiod[id] = 0;
+			} else {
+				gstrafe1det[id] = 0;
+			}
+		}
+	
+		oldducksperperiod[id] = ducksperperiod[id] + 1;
+	
+	}*/
+	
+	/*if( IsWithinBounds( 2.1, 17.99999, dist[id] ) ) {
+		
+	} else if( IsWithinBounds( 0.00001, 35.0, olddist[id] ) ) {
+		
+		if( IsWithinBounds(  ) )
+		
+	}
+	
+	olderdist[id] = olddist[id];
+	olddist[id] = dist[id];*/
+
+	// ------------------------------------
+
+	/*evenevenevenolderjump[id] = evenevenolderjump[id];
+	evenevenolderjump[id] = evenolderjump[id];
+	evenolderjump[id] = olderjump[id];
+	olderjump[id] = oldbuttons & IN_JUMP;
+	
+	*/
+	
+//}
+
+/*public Player_PreThink( id ) {
+	if( !is_user_alive( id ) )
+		return FMRES_IGNORED;
+	
+	new Float:angles[3];
+	pev( id, pev_angles, angles );
+	m_oldyaw[id] = angles[1];
+	
+	static Buttons, OldButtons;
+    static OldDuckCount[33], OldGroundFrame[33], olderduck[33];
+    static gstrafedet[33], gstrafedet2[33], DuckCountGstrafe[33], OldDuckCountGstrafe[33], GroundFrameGstrafe[33];
+    static Float:Speed[3];
+	pev( id, pev_velocity, Speed );
+	Buttons = pev( id, pev_button );
+	OldButtons = pev( id, pev_oldbuttons );
+	
+	Speed[2] = 0.0;*/
+	
+	// Gstrafe hack detection
+	/*if( DuckCountGstrafe[id] ) {
+		if( Buttons & IN_DUCK && !OldButtons & IN_DUCK && !olderduck[id] )
+		DuckCountGstrafe[id]++;
+	else if( Buttons & IN_DUCK && !OldButtons & IN_DUCK )
+		DuckCountGstrafe[id]++;
+	}
+
+	if( DuckCountGstrafe[id] == 1 ) {
+		if( !( Buttons & IN_DUCK ) ) {
+			++gstrafedet[id];
+		}
+	}
+	
+	if( DuckCountGstrafe[id] == OldDuckCountGstrafe[id] && DuckCountGstrafe[id] ) {
+		if( ++gstrafedet[id] > 5 ) {
+			ColorChat(0, NORMAL, "[^x03rAnti-Cheat^x01] Gstrafe hack detected! [NanoSec ^^ has been banned]" );
+		}
+	}
+	
+	if( !Buttons & IN_DUCK && !OldButtons & IN_DUCK && !olderduck[id] && DuckCountGstrafe[id] == 1 ) {
+		if( ++gstrafedet2[id] > 5 ) {
+			ColorChat(0, NORMAL, "[^x03rAnti-Cheat^x01] Gstrafe hack detected! [NanoSec ^^ has been banned]" );
+		}
+		OldDuckCountGstrafe[id] = DuckCountGstrafe[id];
+		DuckCountGstrafe[id] = 0;
+	}
+	
+	olderduck[id] = OldButtons&IN_DUCK;*/
+	// ----------------------------------------
+	
+	// Bhop hack detector counter
+    /*static WarBhop[33], JumpCountBhop[33], GroundFrameBhop[33], DuckCountBhop[33];
+	
+    if( Buttons & IN_JUMP && !( OldButtons & IN_JUMP ) )
+		JumpCountBhop[id]++;
+    if( Buttons & IN_DUCK && !( OldButtons & IN_DUCK ) )
+		DuckCountBhop[id]++;
+    if( pev( id, pev_flags ) & FL_ONGROUND )
+		GroundFrameBhop[id]++;*/
+    
+	// -------------------------------------------
+	
+	// Testing new kind of bhop detector
+	
+	/*switch( ticks[id] ) {
+		case 0: {
+			if( ( Buttons & IN_JUMP ) && !( OldButtons & IN_JUMP ) && olderjump[id] ) {
+				if( ++bhopdet[id] > 11 ) {
+					new szName[32];
+					get_user_name( id, szName, charsmax( szName ) );
+					ColorChat( 0, NORMAL, "[^x03rAnti-Cheat^x01] Bhop hack detected on player %s!", szName );
+				}
+				ticks[id] = 1;
+			}
+		}
+		
+		case 1: {
+			if( !( Buttons & IN_JUMP ) && ( OldButtons & IN_JUMP ) && !olderjump[id] ) {
+				if( ++bhopdet[id] > 11 ) {
+					new szName[32];
+					get_user_name( id, szName, charsmax( szName ) );
+					ColorChat( 0, NORMAL, "[^x03rAnti-Cheat^x01] Bhop hack detected on player %s!", szName );
+				}
+				ticks[id] = 2;
+			}
+		}
+		
+		case 2: {
+			if( ( Buttons & IN_JUMP ) && !( OldButtons & IN_JUMP ) && olderjump[id] ) {
+				if( ++bhopdet[id] > 11 ) {
+					new szName[32];
+					get_user_name( id, szName, charsmax( szName ) );
+					ColorChat( 0, NORMAL, "[^x03rAnti-Cheat^x01] Bhop hack detected on player %s!", szName );
+				}
+				ticks[id] = 0;
+			}
+		}
+		
+		default: {
+			ticks[id] = 0;
+		}
+	}
+	
+	if( !( Buttons & IN_JUMP ) && !( OldButtons & IN_JUMP ) && !olderjump[id] )
+		bhopdet[id] = 0;
+	
+	olderjump[id] = OldButtons & IN_JUMP;*/
+	// -------------------------------------------------------
+	
+	/*if(get_cvar_num("rAC_check_bhop_ult") && is_user_alive(id)) {
+		static EvenOlderButtons;
+		
+		static JumpCount[33], GroundFrame[33], WarBhop[33];
+		
+		if(Buttons&IN_JUMP && !(OldButtons&IN_JUMP))
+			JumpCount[id]++;
+		
+		if(pev(id, pev_flags)&FL_ONGROUND)
+			GroundFrame[id]++;
+		
+		if(Buttons&IN_JUMP && !(OldButtons&IN_JUMP) && EvenOlderButtons&IN_JUMP ) {
+			if(++WarBhop[id] > 9) {
+				new szName[33],szIP[33];
+                get_user_name(id,szName,charsmax(szName));
+                get_user_ip(id,szIP,charsmax(szIP));
+				
+				user_kill(id, 1);
+                WarBhop[id] = 0;
+                server_cmd("amx_ban 14400 %s ^"Bhop hack detected^"", szIP);
+				ColorChat(0, NORMAL, "[^x03rAnti-Cheat^x01] Bhop hack detected! [%s has been banned for 10 days]", szName);
+			}
+		} else {
+			WarBhop[id] = 0;
+		}
+		
+		EvenOlderButtons = pev(id, pev_oldbuttons);
+	}*/
+
+	// Bhop hack detector perfect jumps
+    /*static Flags;
+	Flags = pev( id, pev_flags );
+	
+    static GoodJumps[33], PerfectJumps[33], OldFlags[33], LastJump[33];
+
+    if( !( OldFlags[id] & FL_ONGROUND ) && Flags & FL_ONGROUND && Buttons & IN_JUMP && !( OldButtons & IN_JUMP ) && LastJump[id] >= 3 )  {
+        if( ++GoodJumps[id] >= 3 )  {
+            GoodJumps[id] = 0;
+            if( ++PerfectJumps[id] >= 5 ) {
+				new szName[32], SteamID[32], IPaddr[32];
+				get_user_name( id, szName, charsmax( szName ) );
+				get_user_authid( id, SteamID, charsmax( SteamID ) );
+				get_user_ip( id, IPaddr, charsmax( IPaddr ) );
+			
+				log_to_file( "rAntiCheat.log", "Bhop hack (#0002) detected on player %s, SteamID: %s, IP: %s", szName, SteamID, IPaddr );
+			
+				
+                user_kill( id, 1 );
+                PerfectJumps[id] = 0;
+                ColorChat( 0, NORMAL, "[^x03rAnti-Cheat^x01] Bhop hack detected on player %s!", szName );
+            }
+        }
+	} else if( OldFlags[id] & FL_ONGROUND && Flags & FL_ONGROUND )
+		GoodJumps[id] = 0;
+	
+    if( OldButtons & IN_JUMP && !( Buttons & IN_JUMP ) )
+		LastJump[id] = 1;
+    else if( !( OldButtons & IN_JUMP ) && !( Buttons & IN_JUMP ) )
+		LastJump[id]++;
+	
+    OldFlags[id] = Flags;*/
+	// ---------------------------------
+	
+    /*if(get_cvar_num("Check_Space") && is_user_alive(id))
+     {
+        new szName[32],szIP[32];
+        get_user_name(id, szName, charsmax(szName));
+        get_user_ip(id, szIP, charsmax(szIP));
+
+        static FrameCounter[33],WarSpace[33],GroundFrame[33];
+
+        if(pev(id, pev_flags)&FL_ONGROUND) 
+			GroundFrame[id]++;
+		else if(GroundFrame[id])
+         {
+            static Float:LastJump[33];
+            if(get_gametime() - LastJump[id] <= 0.3) WarSpace[id] = 0;
+            LastJump[id] = get_gametime();
+            GroundFrame[id] = 0;
+        }
+
+        if(OldButtons&IN_JUMP && !(Buttons&IN_JUMP))
+			FrameCounter[id] = 0;
+        else if(Buttons&IN_JUMP && !(OldButtons&IN_JUMP) && FrameCounter[id] >= 1 && FrameCounter[id] <= 5)
+         {
+            if(++WarSpace[id] >= 66)
+             {
+                user_kill(id,1);
+                WarSpace[id] = 0;
+                server_cmd("amx_ban 10080 %s "Holding Space Detected"",szIP);
+                ColorChat(0, NORMAL, "[^3rAnti-Cheat^1] ^4%s ^1 ^1[^4Holding Space^1]", szName);
+            }
+        }
+        if(FrameCounter[id] >= 6) WarSpace[id] = 0;
+        FrameCounter[id]++;
+    }
+    return FMRES_IGNORED;
+}*/
