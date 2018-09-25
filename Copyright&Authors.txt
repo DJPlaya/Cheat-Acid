@@ -1,0 +1,4 @@
+Kigen AC Public - 1.1.9*OUTDATED - Copyright 2009 Max Krivanek aka Kigen
+Very Basic Anti Cheat - 3.3 - MoggieX
+rAntiCheat - 1.5 - Ranarrr
+Sourcemod Anti Cheat - 0.8.6.0 - Copyright 2011-2016 SMAC Development Team, 2007-2011 CodingDirect LLC
