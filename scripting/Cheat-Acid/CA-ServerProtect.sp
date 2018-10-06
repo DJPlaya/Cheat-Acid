@@ -15,6 +15,19 @@ TODO:
 
 #define PLUGIN_VERSION "1.0"
 
+char a_cSecureUpload[] = // All Games the we know of which dosent have the upload exploit
+{
+	{"Counter-Strike: Global Offensive"},
+	{"Counter-Strike"},
+	{"Team Fortress 2"},
+	{},
+	{},
+	{},
+	{},
+	{},
+	{},
+}
+
 Handle hVersion = INVALID_HANDLE, hCvarRconPass = INVALID_HANDLE, hCvarCheats = INVALID_HANDLE;
 char sRconRealPass[128];
 bool bRconLocked = false, bSMRconLoaded = false;
@@ -50,6 +63,29 @@ public void OnPluginStart()
 		LogError("[Error][Cheat-Acid: Server Protect] ConVar 'sv_cheats' dosent exist!");
 		SetFailState("ConVar 'sv_cheats' dosent exist!");
 	}
+	
+	Handle hCvarUpload = FindConVar("sv_allowupload");
+	if(!hCvarCheats)
+	{
+		PrintToServer("[Error][Cheat-Acid: Server Protect] ConVar 'sv_allowupload' dosent exist!");
+		LogError("[Error][Cheat-Acid: Server Protect] ConVar 'sv_allowupload' dosent exist!");
+		SetFailState("ConVar 'sv_allowupload' dosent exist!");
+	}
+	
+	if(GetConVarBool(hCvarUpload))
+	{
+		char cGameMod[64];
+		GetGameDescription(cGameMod, 64, true);
+		
+		if(FindStringInArray(a_cSecureUpload, cGameMod) == -1)
+		{
+			OnUploadEnable();
+			
+			HookConVarChange(hCvarUpload, OnUploadEnable);
+		}
+	}
+	
+	delete hCvarUpload;
 	
 	HookConVarChange(hCvarRconPass, OnRconPassChanged);
 	HookConVarChange(hCvarCheats, OnCheatsEnabled);
@@ -100,6 +136,14 @@ public void OnCheatsEnabled2()
 				PrintToChat(iClient, "[Warning][Cheat-Acid: Server Protect] sv_cheats got enabled. Disabling it to prevent Exploits...");
 				
 	SetConVarBool(hCvarCheats, false);
+}
+
+public void OnUploadEnabled(Handle convar, const char[] oldValue, const char[] newValue)
+{
+	SetConVarBool(hCvarUpload, 0, true, true);
+	
+	PrintToServer("[Warning][Cheat-Acid: Server Protect] ConVar 'sv_allowupload' is enabled, disabling it to prevent Exploits");
+	LogError("[Warning][Cheat-Acid: Server Protect] ConVar 'sv_allowupload' is enabled, disabling it to prevent Exploits. If you belive your Game is secure, contact the Plugin Author!");
 }
 
 public Action SMRCon_OnAuth(rconId, const char[] address, const char[] password, &bool allow)
