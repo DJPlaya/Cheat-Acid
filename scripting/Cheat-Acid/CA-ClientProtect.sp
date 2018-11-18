@@ -1,14 +1,6 @@
-#pragma newdecls required
+#include <Cheat-Acid>
 
-#define PLUGIN_VERSION "1.0"
-
-Handle hVersion = INVALID_HANDLE;
 //Handle aExploitCvars
-
-// 1 - Kick
-// 2 - Ban
-// 4 - Delayed Ban
-// 8 - Block
 
 public Plugin myinfo =
 {
@@ -21,9 +13,6 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-	hVersion = CreateConVar("ca_clientprotect_version", PLUGIN_VERSION, "Plugin Version", FCVAR_UNLOGGED|FCVAR_DONTRECORD);
-	SetConVarString(hVersion, PLUGIN_VERSION);
-	
 	//aExploitCvars = CreateArray();// 256);
 }
 

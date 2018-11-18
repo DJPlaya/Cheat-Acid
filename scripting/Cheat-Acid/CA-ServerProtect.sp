@@ -1,34 +1,24 @@
-/*
-TODO:
--OnCheatsEnabled2 is called every Mapchange and checks all players, how to check if the map is fully started?
--Add an Cvar for the sv_cheats check
--Remove Breakpoints? (Since the Plugin is important to run)
--Remove sv_cheats check but fix all security Issues and exploitable Commands
+/*TODO:
+- OnCheatsEnabled2 is called every Mapchange and checks all players, how to check if the map is fully started?
+- Add an Cvar for the sv_cheats check
+- Add more Games to the Secure Upload List
+- Remove Breakpoints? (Since the Plugin is important to run)
+- Remove sv_cheats check but fix all security Issues and exploitable Commands
 */
 
-#pragma newdecls required
-
-//#include <smlib/clients>
+#include <Cheat-Acid>
 #undef REQUIRE_EXTENSIONS
 #tryinclude <smrcon>
 #define REQUIRE_EXTENSIONS
 
-#define PLUGIN_VERSION "1.0"
-
-char a_cSecureUpload[] = // All Games the we know of which dosent have the upload exploit
+char a_cSecureUpload[] = // All Games the we know of which dosent have the upload Exploit
 {
 	{"Counter-Strike: Global Offensive"},
 	{"Counter-Strike"},
-	{"Team Fortress 2"},
-	{},
-	{},
-	{},
-	{},
-	{},
-	{},
+	{"Team Fortress 2"}
 }
 
-Handle hVersion = INVALID_HANDLE, hCvarRconPass = INVALID_HANDLE, hCvarCheats = INVALID_HANDLE;
+Handle hCvarRconPass, hCvarCheats, hCvarUpload;
 char sRconRealPass[128];
 bool bRconLocked = false, bSMRconLoaded = false;
 
@@ -43,9 +33,6 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-	hVersion = CreateConVar("ca_serverprotect_version", PLUGIN_VERSION, "Plugin Version", FCVAR_UNLOGGED|FCVAR_DONTRECORD);
-	SetConVarString(hVersion, PLUGIN_VERSION);
-	
 	bSMRconLoaded = LibraryExists("smrcon");
 	
 	hCvarRconPass = FindConVar("rcon_password");
@@ -64,8 +51,8 @@ public void OnPluginStart()
 		SetFailState("ConVar 'sv_cheats' dosent exist!");
 	}
 	
-	Handle hCvarUpload = FindConVar("sv_allowupload");
-	if(!hCvarCheats)
+	hCvarUpload = FindConVar("sv_allowupload");
+	if(!hCvarUpload)
 	{
 		PrintToServer("[Error][Cheat-Acid: Server Protect] ConVar 'sv_allowupload' dosent exist!");
 		LogError("[Error][Cheat-Acid: Server Protect] ConVar 'sv_allowupload' dosent exist!");
@@ -79,13 +66,14 @@ public void OnPluginStart()
 		
 		if(FindStringInArray(a_cSecureUpload, cGameMod) == -1)
 		{
-			OnUploadEnable();
+			OnUploadEnabled();
 			
-			HookConVarChange(hCvarUpload, OnUploadEnable);
+			HookConVarChange(hCvarUpload, OnUploadEnabled);
 		}
+		
+		else
+			delete hCvarUpload;
 	}
-	
-	delete hCvarUpload;
 	
 	HookConVarChange(hCvarRconPass, OnRconPassChanged);
 	HookConVarChange(hCvarCheats, OnCheatsEnabled);
@@ -127,23 +115,25 @@ public void OnCheatsEnabled(Handle convar, const char[] oldValue, const char[] n
 		RequestFrame(OnCheatsEnabled2); // Delay the Cheats disable, so the Server can set ConVars that require Cheats on Map start
 }
 
-public void OnCheatsEnabled2()
+public void OnCheatsEnabled2(any data)
 {
 	LogMessage("[Warning][Cheat-Acid: Server Protect] sv_cheats got enabled. Disabling it to prevent Exploits...");
-	for(int iClient = 1; iClient <= MaxClients; iClient++)
+	/*for(int iClient = 1; iClient <= MaxClients; iClient++)
 		if(Client_IsIngameAuthorized(iClient, true))
 			if(GetUserAdmin(iClient) != INVALID_ADMIN_ID)
-				PrintToChat(iClient, "[Warning][Cheat-Acid: Server Protect] sv_cheats got enabled. Disabling it to prevent Exploits...");
-				
+				PrintToChat(iClient, "[Warning][Cheat-Acid: Server Protect] sv_cheats got enabled. Disabling it to prevent Exploits...");*/
+	
+	SendToAdminChat(2, "sv_cheats got enabled. Disabling it to prevent Exploits...");
+	
 	SetConVarBool(hCvarCheats, false);
 }
 
 public void OnUploadEnabled(Handle convar, const char[] oldValue, const char[] newValue)
 {
-	SetConVarBool(hCvarUpload, 0, true, true);
+	SetConVarBool(hCvarUpload, false, true, false);
 	
-	PrintToServer("[Warning][Cheat-Acid: Server Protect] ConVar 'sv_allowupload' is enabled, disabling it to prevent Exploits");
-	LogError("[Warning][Cheat-Acid: Server Protect] ConVar 'sv_allowupload' is enabled, disabling it to prevent Exploits. If you belive your Game is secure, contact the Plugin Author!");
+	PrintToServer("[Warning][Cheat-Acid: Server Protect] ConVar 'sv_allowupload' got enabled, disabling it to prevent Exploits...");
+	LogError("[Warning][Cheat-Acid: Server Protect] ConVar 'sv_allowupload' got enabled, disabling it to prevent Exploits. If you belive your Game is secure, contact the Plugin Author!");
 }
 
 public Action SMRCon_OnAuth(rconId, const char[] address, const char[] password, &bool allow)
