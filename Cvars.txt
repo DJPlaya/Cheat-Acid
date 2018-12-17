@@ -1,0 +1,114 @@
+# Here we will collect all insecure or exploitable Cvars along with their allowed Values, where to check them an a short Description
+# Example: CVAR | Force Value(Range) | SV/CL | Description
+# * Means that the Value depends on the Server Settings
+
+|-Unsorted/Unverified
+ |cl_clock_correction | 1.0 | CL | #
+ |cl_leveloverview | 0.0 | CL | #
+ |cl_overdraw_test | 0.0 | CL | #
+ |cl_phys_timescale | * | CL | #
+ |cl_showevents | 0.0 | CL | #
+ |host_timescale | * | CL | Sets Timescale(Slowmo or fast as f***)
+
+ |mat_dxlevel | 80.0-X | CL | DirectX 8 is minimal required
+ |mat_fillrate | 0.0 | CL | #
+ |mat_measurefillrate | 0.0 | CL | #
+ |mat_proxy | 0.0 | CL | #
+ |mat_showlowresimage | 0.0 | CL | #
+ |mat_wireframe | 0.0 | CL | #
+ |mem_force_flush | 0.0 | CL | #
+ |mp_fadetoblack | * | CL | #
+ |r_aspectratio | 0.0 | CL | #
+ |r_colorstaticprops | 0.0 | CL | #
+ |r_dispwalkable | 0.0 | CL | #
+ |r_drawbeams | 1.0 | CL | #
+ |r_drawbrushmodels | 1.0 | CL | #
+ |r_drawclipbrushes | 0.0 | CL | #
+ |r_drawdecals | 1.0 | CL | #
+ |r_drawentities | 1.0 | CL | #
+ |r_drawmodelstatsoverlay | 0.0 | CL | #
+ |r_drawopaqueworld | 1.0 | CL | #
+ |r_drawothermodels | 1.0 | CL | #
+ |r_drawparticles | 1.0 | CL | #
+ |r_drawrenderboxes | 0.0 | CL | #
+ |r_drawskybox | 1.0 | CL | #
+ |r_drawtranslucentworld | 1.0 | CL | #
+ |r_shadowwireframe | 0.0 | CL | #
+ |r_skybox | 1.0 | CL | #
+ |r_visocclusion | 0.0 | CL | #
+ |snd_show | 0.0 | CL | #
+ |snd_visualize | 0.0 | CL | #
+ |vcollide_wireframe | 0.0 | CL | #
+ |sv_gravity | * | CL | Physical Gravity
+ |r_drawothermodels | ?1.0? | CL | #
+ |cl_clock_correction | 1.0 | CL | #
+ |cl_leveloverview | 0.0 | CL | #
+ |cl_overdraw_test | 0.0 | CL | #
+ |cl_particles_show_bbox | 0.0 | CL | #
+ |cl_phys_timescale | * | CL | #
+ |cl_showevents | 0.0 | CL | #
+ |host_timescale | * | CL | #
+
+ |fps_max | ? | CL | #
+ |fps_modem | ? | CL | #
+ |fps_override | ? | CL | #
+ |cl_sidespeed | ? | CL | #
+ |cl_pitchspeed | ? | CL | #
+ |cl_forwardspeed | ? | CL | #
+ |cl_backspeed | ? | CL | #
+ |cl_yawspeed | ? | CL | #
+ |developer | ? | CL | #
+ |cl_filterstuffcmd | ? | CL | #
+
+ |sv_allowminmodels",	Comp_Replicated, Action_Ban);
+ |sv_competitive_minspec", Comp_Replicated, Action_Ban);
+ |sv_consistency",		Comp_Replicated, Action_Ban);
+ |sv_footsteps",			Comp_Replicated, Action_Ban);
+
+|-Client Mods(Any) - We ban Everyone whith that Cvars, Everyone who is able to install thoose Mods should know that they can be used for Exploits
+ |0penscript | # | CL | #
+ |aim_bot | # | CL | #
+ |aim_fov | # | CL | #
+ |bat_version | # | CL | #
+ |beetlesmod_version | # | CL | #
+ |est_version | # | CL | #
+ |eventscripts_ver | # | CL | #
+ |fm_attackmode | # | CL | #
+ |lua-engine | # | CL | #
+ |lua_open | # | CL | #
+ |mani_admin_plugin_version | # | CL | #
+ |maniadminhacker | # | CL | #
+ |maniadmintakeover | # | CL | #
+ |metamod_version | # | CL | #
+ |openscript | # | CL | #
+ |openscript_version | # | CL | #
+ |runnscript | # | CL | #
+ |smadmintakeover | # | CL | #
+ |sourcemod_version | # | CL | #
+ |tb_enabled | # | CL | #
+ |zb_version | # | CL | #
+
+|-Source 2009
+ |sv_cheats | 0 | SV/CL | Allow Cheat Protected Commands/Cvars
+ |sv_consistency | * | CL | File Consistency, replaced by sv_pure
+ |sv_pure | * | CL | File Consistency
+ |fog_enable | * | CL | Is the Fog enabled Ingame
+
+|-CSGO
+ |#Add Cvars from the danger zone update
+
+mp_damage_headshot_only                  : 0        : , "sv", "rep"    : Determines whether non-headshot hits do any damage.
+mp_damage_scale_ct_body                  : 1        : , "sv", "rep"    : Scales the damage a CT player takes by this much when they take damage in the body. (1 == 100%, 0.5 == 50%)
+mp_damage_scale_ct_head                  : 1        : , "sv", "rep"    : Scales the damage a CT player takes by this much when they take damage in the head (1 == 100%, 0.5 == 50%).  REMEMBER! headshot
+mp_damage_scale_t_body                   : 1        : , "sv", "rep"    : Scales the damage a T player takes by this much when they take damage in the body. (1 == 100%, 0.5 == 50%)
+mp_damage_scale_t_head                   : 1        : , "sv", "rep"    : Scales the damage a T player takes by this much when they take damage in the head (1 == 100%, 0.5 == 50%).  REMEMBER! headshots
+mp_damage_vampiric_amount                : 0        : , "sv", "rep"    : If Set to non-0, will determine the fraction of damage dealt that will be given to attacker.
+
+sv_disable_pas                           : 1        : , "sv", "cheat", "rep" : 
+sv_disable_radar                         : 1        : , "rep", "cl"    : 
+
+sv_grassburn                             : 1        : , "rep", "cl"    : 
+
+sv_regeneration_force_on                 : 0        : , "sv", "cheat"  : Cheat to test regenerative health systems
+
+sv_walkable_normal                       : 0        : , "rep", "cl"    : 

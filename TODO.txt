@@ -1,12 +1,14 @@
-Ordered by Priority from high? to low?
+Ordered by Priority from high to low?
 
 |-DO
  |Download a fresh copy of SMLib, Sourcemod and SMRcon
  |Error and Warning Information(Errors.txt)
- |SourceSleuth or similar System to provide warnings
- |Admin warn System with ASteamBot
+ |Use Arrays and Array_FindString for looking up the cmds and Cvars
+ |SourceSleuth with IP and Cookies
  |Database support for storing Warnings about Cheaters/Spammers
- |Strikeback System to Hack the Hackers using File Net Messages
+ |Admin warn System with ASteamBot
+ |Admin warn System with SourceIRC
+ |Strikeback System to Hack the Hackers using File Net Messages and AStambot
 
 
 |­-Check

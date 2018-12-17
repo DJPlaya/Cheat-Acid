@@ -2,7 +2,7 @@
 
 #define PLUGIN_VERSION "1.0"
 
-Handle hVersion = INVALID_HANDLE;
+ConVar hVersion;
 
 public Plugin myinfo =
 {
@@ -15,6 +15,5 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-	hVersion = CreateConVar("ca_PARTPLUGIN_version", PLUGIN_VERSION, "Plugin Version", FCVAR_UNLOGGED|FCVAR_DONTRECORD);
-	SetConVarString(hVersion, PLUGIN_VERSION);
+	hVersion = CreateConVar("ca_PARTPLUGIN_version", PLUGIN_VERSION, "Plugin Version", FCVAR_NOTIFY|FCVAR_UNLOGGED|FCVAR_DONTRECORD);
 }
