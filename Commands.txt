@@ -1,0 +1,71 @@
+# Here we will collect all insecure or exploitable Commads along with an short Description
+# Example: CMD | Description
+# Please not that this AC is not made for blocking Command spamming, use forlix floodcheck if you need such
+
+|-Unsorted/Unverified
+ |ai_test_los | #
+ |changelevel | Similar to 'map'
+ |cl_fullupdate | #
+ |dbghist_addline | #
+ |dbghist_dump | #
+ |drawcross | #
+ |drawline | #
+ |dump_entity_sizes | #
+ |dump_globals | #
+ |dump_panels | #
+ |dump_terrain | #
+ |dumpcountedstrings | #
+ |dumpentityfactories | #
+ |dumpeventqueue | #
+ |dumpgamestringtable | #
+ |editdemo | #
+ |endround | #
+ |groundlist | #
+ |listdeaths | #
+ |listmodels | #
+ |map | Similar to 'changelevel'
+ |map_showspawnpoints | #
+ |mem_dump | #
+ |mp_dump_timers | #
+ |npc_ammo_deplete | #
+ |npc_heal | #
+ |npc_speakall | #
+ |npc_thinknow | #
+ |physics_budget | #
+ |physics_debug_entity | #
+ |physics_highlight_active | #
+ |physics_report_active | #
+ |physics_select | #
+ |q_sndrcn | #?
+ |report_entities | #
+ |report_simthinklist | #
+ |report_touchlinks | #
+ |respawn_entities | #
+ |rr_reloadresponsesystems | #
+ |scene_flush | #
+ |send_me_rcon | #?
+ |snd_digital_surround | #
+ |snd_restart | #
+ |soundlist | #
+ |soundscape_flush | #
+ |sv_benchmark_force_start | #
+ |sv_findsoundname | #
+ |sv_soundemitter_filecheck | #
+ |sv_soundemitter_flush | #
+ |sv_soundscape_printdebuginfo | #
+ |wc_update_entity | #
+ |speed.toggle | #
+
+|-Source 2009
+  -|Only block if contains Substring: admin, alias, logic_auto, logic_autosave, logic_branch, logic_case, logic_collision_pair, logic_compareto, logic_lineto, logic_measure_movement, logic_multicompare, logic_navigation, logic_relay, logic_timer, ma_, meta, mp_ , point_clientcommand, point_servercommand, quit, rcon, restart, sm, sv_, taketimer, (quti)
+  |ent_create | Creates an Entity
+  |ent_fire | Fires an Event towards an Entity
+
+|-CSGO
+ |
+
+|-L4D
+ |demo_returntolobby | #
+
+|-L4D2
+ |give | # Check existence in other Games
