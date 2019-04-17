@@ -1,4 +1,4 @@
-Ordered by Priority from high to low?
+Ordered by Priority from high to low
 
 |-DO
  |Download a fresh copy of SMLib, Sourcemod and SMRcon
@@ -8,10 +8,10 @@ Ordered by Priority from high to low?
  |Database support for storing Warnings about Cheaters/Spammers
  |Admin warn System with ASteamBot
  |Admin warn System with SourceIRC
- |Strikeback System to Hack the Hackers using File Net Messages and AStambot
+ |Strikeback System to Hack the Hackers using File Net Messages and ASteambot
 
 
-|­-Check
+|Â­-Check
  |(When Done) All Modules/Parts
 
 
