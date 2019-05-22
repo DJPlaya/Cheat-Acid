@@ -1,4 +1,3 @@
-#include <sourcemod>
 #include <socket>
 
 #define MAX_AUTHID_LENGTH 20 // TODO: RE-CHECK!

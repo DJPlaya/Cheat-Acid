@@ -2,7 +2,6 @@
 - TODO: Talk with EAC about the removed bancheck PHP file
 */
 
-#include <sourcemod>
 #include <socket>
 #include <smlib/clients>
 

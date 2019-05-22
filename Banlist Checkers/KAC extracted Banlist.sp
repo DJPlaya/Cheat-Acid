@@ -3,7 +3,6 @@ INFO:
 - The Socket automaticly checks if the player is banned or not
 - g_hDenyArray still includes all Bans
 */
-#include <sourcemod>
 #include <socket>
 
 #define MAX_AUTHID_LENGTH 20 // TODO: RE-CHECK!
