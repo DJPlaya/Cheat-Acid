@@ -21,7 +21,7 @@ public OnClientAuthorized(client, const char[] auth)
 {
 	if (IsFakeClient(client))
 		return;
-	
+		
 	// Workaround for universe digit change on L4D+ engines. // TODO: No Longer Needed?
 	char sAuthID[MAX_AUTHID_LENGTH];
 	FormatEx(sAuthID, sizeof(sAuthID), "STEAM_0:%s", auth[8]);
