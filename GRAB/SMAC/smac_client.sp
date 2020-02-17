@@ -1,8 +1,8 @@
 /*
     SourceMod Anti-Cheat
-    Copyright (C) 2011-2016 SMAC Development Team
+    Copyright (C) 2011-2016 SMAC Development Team 
     Copyright (C) 2007-2011 CodingDirect LLC
-	
+   
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -18,6 +18,7 @@
 */
 
 #pragma semicolon 1
+#pragma newdecls required
 
 /* SM Includes */
 #include <sourcemod>
@@ -25,515 +26,514 @@
 #include <smac>
 #undef REQUIRE_EXTENSIONS
 #tryinclude <connect>
-#undef REQUIRE_PLUGIN
-#tryinclude <updater>
 
 /* Plugin Info */
-public Plugin:myinfo =
+public Plugin myinfo =
 {
-	name = "SMAC Client Protection",
-	author = SMAC_AUTHOR,
-	description = "Blocks general client exploits",
-	version = SMAC_VERSION,
-	url = SMAC_URL
+    name =          "SMAC Client Protection",
+    author =        SMAC_AUTHOR,
+    description =   "Blocks general client exploits",
+    version =       SMAC_VERSION,
+    url =           SMAC_URL
 };
 
 /* Globals */
-#define UPDATE_URL	"http://smac.sx/updater/smac_client.txt"
-
-new Handle:g_hCvarConnectSpam = INVALID_HANDLE;
-new Handle:g_hCvarValidateAuth = INVALID_HANDLE;
-new Handle:g_hClientConnections = INVALID_HANDLE;
-new Float:g_fTeamJoinTime[MAXPLAYERS+1][6];
-new g_iNameChanges[MAXPLAYERS+1];
-new g_iAchievements[MAXPLAYERS+1];
-new bool:g_bMapStarted = false;
-new bool:g_bConnectExt = false;
+ConVar g_hCvarConnectSpam = null;
+ConVar g_hCvarValidateAuth = null;
+Handle g_hClientConnections = INVALID_HANDLE;
+float g_fTeamJoinTime[MAXPLAYERS+1][6];
+int g_iNameChanges[MAXPLAYERS+1];
+int g_iAchievements[MAXPLAYERS+1];
+bool g_bMapStarted = false;
+bool g_bConnectExt = false;
 
 /* Plugin Functions */
-public APLRes:AskPluginLoad2(Handle:myself, bool:late, String:error[], err_max)
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
-	g_bMapStarted = late;
-	return APLRes_Success;
+    g_bMapStarted = late;
+    return APLRes_Success;
 }
 
-public OnPluginStart()
+public void OnPluginStart()
 {
-	LoadTranslations("smac.phrases");
-	
-	// Convars.
-	g_hCvarConnectSpam = SMAC_CreateConVar("smac_antispam_connect", "2", "Block reconnection attempts for X seconds. (0 = Disabled)", 0, true, 0.0);
-	g_hCvarValidateAuth = SMAC_CreateConVar("smac_validate_auth", "0", "Kick clients that fail to authenticate within 10 seconds of joining the server.", 0, true, 0.0, true, 1.0);
-	g_hClientConnections = CreateTrie();
-	
-	// Hooks.
-	if (SMAC_GetGameType() == Game_CSS || SMAC_GetGameType() == Game_TF2)
-	{
-		HookUserMessage(GetUserMessageId("TextMsg"), Hook_TextMsg, true);
-	}
-	
-	HookEventEx("player_team", Event_PlayerTeam, EventHookMode_Pre);
-	HookEvent("player_changename", Event_PlayerChangeName, EventHookMode_Post);
-	HookEventEx("achievement_earned", Event_AchievementEarned, EventHookMode_Pre);
-	CreateTimer(10.0, Timer_DecreaseCount, _, TIMER_REPEAT);
-	
-	// Check all clients.
-	if (g_bMapStarted)
-	{
-		decl String:sReason[256];
+    LoadTranslations("smac.phrases");
 
-		for (new i = 1; i <= MaxClients; i++)
-		{
-			if (IsClientConnected(i) && !OnClientConnect(i, sReason, sizeof(sReason)))
-			{
-				KickClient(i, "%s", sReason);
-			}
-		}
-	}
-	
-#if defined _updater_included
-	if (LibraryExists("updater"))
-	{
-		Updater_AddPlugin(UPDATE_URL);
-	}
-#endif
+    // Convars.
+    g_hCvarConnectSpam = SMAC_CreateConVar("smac_antispam_connect", "2", "Block reconnection attempts for X seconds. (0 = Disabled)", 0, true, 0.0);
+    g_hCvarValidateAuth = SMAC_CreateConVar("smac_validate_auth", "0", "Kick clients that fail to authenticate within 10 seconds of joining the server.", 0, true, 0.0, true, 1.0);
+    g_hClientConnections = CreateTrie();
+
+    // Hooks.
+    if (SMAC_GetGameType() == Game_CSS || SMAC_GetGameType() == Game_TF2)
+    {
+        HookUserMessage(GetUserMessageId("TextMsg"), Hook_TextMsg, true);
+    }
+
+    HookEventEx("player_team", Event_PlayerTeam, EventHookMode_Pre);
+    HookEvent("player_changename", Event_PlayerChangeName, EventHookMode_Post);
+    HookEventEx("achievement_earned", Event_AchievementEarned, EventHookMode_Pre);
+    CreateTimer(10.0, Timer_DecreaseCount, _, TIMER_REPEAT);
+
+    // Check all clients.
+    if (g_bMapStarted)
+    {
+        char sReason[256];
+
+        for (int i = 1; i <= MaxClients; i++)
+        {
+            if (IsClientConnected(i) && !OnClientConnect(i, sReason, sizeof(sReason)))
+            {
+                KickClient(i, "%s", sReason);
+            }
+        }
+    }
 }
 
-public OnLibraryAdded(const String:name[])
+public void OnMapStart()
 {
-#if defined _updater_included
-	if (StrEqual(name, "updater"))
-	{
-		Updater_AddPlugin(UPDATE_URL);
-	}
-#endif
+    // Give time for players to connect before we start checking for spam.
+    CreateTimer(20.0, Timer_MapStarted, _, TIMER_FLAG_NO_MAPCHANGE);
 }
 
-public OnMapStart()
+public Action Timer_MapStarted(Handle timer)
 {
-	// Give time for players to connect before we start checking for spam.
-	CreateTimer(20.0, Timer_MapStarted, _, TIMER_FLAG_NO_MAPCHANGE);
+    g_bMapStarted = true;
+    return Plugin_Stop;
 }
 
-public Action:Timer_MapStarted(Handle:timer)
+public void OnMapEnd()
 {
-	g_bMapStarted = true;
-	return Plugin_Stop;
+    g_bMapStarted = false;
+    ClearTrie(g_hClientConnections);
 }
 
-public OnMapEnd()
+public bool OnClientPreConnectEx(const char[] name, char password[255], const char[] ip, const char[] steamID, char rejectReason[255])
 {
-	g_bMapStarted = false;
-	ClearTrie(g_hClientConnections);
+    g_bConnectExt = true;
+
+    if (IsConnectSpamming(ip))
+    {
+        if (ShouldLogIP(ip))
+        {
+            SMAC_Log("%s (ID: %s | IP: %s) was temporarily banned for connection spam.", name, steamID, ip);
+        }
+
+        BanIdentity(ip, 1, BANFLAG_IP, "Spam Connecting", "SMAC");
+        FormatEx(rejectReason, sizeof(rejectReason), "%T.", "SMAC_PleaseWait", LANG_SERVER);
+        return false;
+    }
+
+    return true;
 }
 
-public bool:OnClientPreConnectEx(const String:name[], String:password[255], const String:ip[], const String:steamID[], String:rejectReason[255])
+public bool OnClientConnect(int client, char[] rejectmsg,int size)
 {
-	g_bConnectExt = true;
-	
-	if (IsConnectSpamming(ip))
-	{
-		if (ShouldLogIP(ip))
-		{
-			SMAC_Log("%s (ID: %s | IP: %s) was temporarily banned for connection spam.", name, steamID, ip);
-		}
-		
-		BanIdentity(ip, 1, BANFLAG_IP, "Spam Connecting", "SMAC");
-		FormatEx(rejectReason, sizeof(rejectReason), "%T.", "SMAC_PleaseWait", LANG_SERVER);
-		return false;
-	}
+    if (IsFakeClient(client))
+    {
+        return true;
+    }
 
-	return true;
+    if (!g_bConnectExt)
+    {
+        char sIP[17];
+        GetClientIP(client, sIP, sizeof(sIP));
+
+        if (IsConnectSpamming(sIP))
+        {
+            if (ShouldLogIP(sIP))
+            {
+                SMAC_LogAction(client, "was temporarily banned for connection spam.");
+            }
+
+            BanIdentity(sIP, 1, BANFLAG_IP, "Spam Connecting", "SMAC");
+            FormatEx(rejectmsg, size, "%T", "SMAC_PleaseWait", client);
+            return false;
+        }
+    }
+
+    if (!IsClientNameValid(client))
+    {
+        FormatEx(rejectmsg, size, "%T", "SMAC_ChangeName", client);
+        return false;
+    }
+
+    return true;
 }
 
-public bool:OnClientConnect(client, String:rejectmsg[], size)
+public void OnClientPutInServer(int client)
 {
-	if (IsFakeClient(client))
-	{
-		return true;
-	}
-	
-	if (!g_bConnectExt)
-	{
-		decl String:sIP[17];
-		GetClientIP(client, sIP, sizeof(sIP));
-		
-		if (IsConnectSpamming(sIP))
-		{
-			if (ShouldLogIP(sIP))
-			{
-				SMAC_LogAction(client, "was temporarily banned for connection spam.");
-			}
-			
-			BanIdentity(sIP, 1, BANFLAG_IP, "Spam Connecting", "SMAC");
-			FormatEx(rejectmsg, size, "%T", "SMAC_PleaseWait", client);
-			return false;
-		}
-	}
+    if (IsClientNew(client))
+    {
+        g_iNameChanges[client] = 0;
+        g_iAchievements[client] = 0;
+    }
 
-	if (!IsClientNameValid(client))
-	{
-		FormatEx(rejectmsg, size, "%T", "SMAC_ChangeName", client);
-		return false;
-	}
-
-	return true;
+    // Give the client 10s to fully authenticate.
+    if (!IsFakeClient(client) && !IsClientAuthorized(client) && GetConVarBool(g_hCvarValidateAuth))
+    {
+        CreateTimer(10.0, Timer_ValidateAuth, GetClientSerial(client), TIMER_FLAG_NO_MAPCHANGE);
+    }
 }
 
-public OnClientPutInServer(client)
+public Action Timer_ValidateAuth(Handle timer, any serial)
 {
-	if (IsClientNew(client))
-	{
-		g_iNameChanges[client] = 0;
-		g_iAchievements[client] = 0;
-	}
-	
-	// Give the client 10s to fully authenticate.
-	if (!IsFakeClient(client) && !IsClientAuthorized(client) && GetConVarBool(g_hCvarValidateAuth))
-	{
-		CreateTimer(10.0, Timer_ValidateAuth, GetClientSerial(client), TIMER_FLAG_NO_MAPCHANGE);
-	}
+    int client = GetClientFromSerial(serial);
+
+    if (IS_CLIENT(client) && !IsClientAuthorized(client))
+    {
+        KickClient(client, "%t", "SMAC_FailedAuth");
+    }
+
+    return Plugin_Stop;
 }
 
-public Action:Timer_ValidateAuth(Handle:timer, any:serial)
+public void OnClientSettingsChanged(int client)
 {
-	new client = GetClientFromSerial(serial);
-	
-	if (IS_CLIENT(client) && !IsClientAuthorized(client))
-	{
-		KickClient(client, "%t", "SMAC_FailedAuth");
-	}
-	
-	return Plugin_Stop;
+    if (!IsFakeClient(client) && !IsClientNameValid(client))
+    {
+        KickClient(client, "%t", "SMAC_ChangeName");
+    }
 }
 
-public OnClientSettingsChanged(client)
+public void OnClientDisconnect_Post(int client)
 {
-	if (!IsFakeClient(client) && !IsClientNameValid(client))
-	{
-		KickClient(client, "%t", "SMAC_ChangeName");
-	}
+    for (int i = 0; i < sizeof(g_fTeamJoinTime[]); i++)
+    {
+        g_fTeamJoinTime[client][i] = 0.0;
+    }
 }
 
-public OnClientDisconnect_Post(client)
+public Action Hook_TextMsg(UserMsg msg_id, BfRead msg, const int[] players, int playersNum, bool reliable, bool init)
 {
-	for (new i = 0; i < sizeof(g_fTeamJoinTime[]); i++)
-	{
-		g_fTeamJoinTime[client][i] = 0.0;
-	}
+    // Name spam notices will only be sent to the offending client.
+    if (!reliable || playersNum != 1)
+    {
+        return Plugin_Continue;
+    }
+
+    // The message we are looking for is sent to chat.
+    int destination = BfReadByte(msg);
+
+    if (destination != 3)
+    {
+        return Plugin_Continue;
+    }
+
+    char sBuffer[64];
+    BfReadString(msg, sBuffer, sizeof(sBuffer));
+
+    if (StrEqual(sBuffer, "#Name_change_limit_exceeded"))
+    {
+        int client = players[0];
+
+        if (!IsFakeClient(client) && SMAC_CheatDetected(client, Detection_NameChangeSpam, INVALID_HANDLE) == Plugin_Continue)
+        {
+            SMAC_LogAction(client, "was kicked for name change spam.");
+            KickClient(client, "%t", "SMAC_CommandSpamKick");
+        }
+    }
+
+    return Plugin_Continue;
 }
 
-public Action:Hook_TextMsg(UserMsg:msg_id, Handle:bf, const players[], playersNum, bool:reliable, bool:init)
+public Action Event_PlayerTeam(Event event, const char[] name, bool dontBroadcast)
 {
-	// Name spam notices will only be sent to the offending client.
-	if (!reliable || playersNum != 1)
-		return Plugin_Continue;
-	
-	// The message we are looking for is sent to chat.
-	new destination = BfReadByte(bf);
-	
-	if (destination != 3)
-		return Plugin_Continue;
-	
-	decl String:sBuffer[64];
-	BfReadString(bf, sBuffer, sizeof(sBuffer));
-	
-	if (StrEqual(sBuffer, "#Name_change_limit_exceeded"))
-	{
-		new client = players[0];
-		
-		if (!IsFakeClient(client) && SMAC_CheatDetected(client, Detection_NameChangeSpam, INVALID_HANDLE) == Plugin_Continue)
-		{
-			SMAC_LogAction(client, "was kicked for name change spam.");
-			KickClient(client, "%t", "SMAC_CommandSpamKick");
-		}
-	}
-	
-	return Plugin_Continue;
+    if (dontBroadcast)
+    {
+        return Plugin_Continue;
+    }
+
+    // Don't broadcast team changes if they're being spammed.
+    int client = GetClientOfUserId(GetEventInt(event, "userid"));
+    
+    if (IS_CLIENT(client))
+    {
+        float fGameTime = GetGameTime();
+        int team = GetEventInt(event, "team");
+
+        if (team < 0 || team >= sizeof(g_fTeamJoinTime[]))
+        {
+            team = 0;
+        }
+
+        if (g_fTeamJoinTime[client][team] > fGameTime)
+        {
+            SetEventBroadcast(event, true);
+        }
+
+        g_fTeamJoinTime[client][team] = fGameTime + 30.0;
+    }
+
+    return Plugin_Continue;
 }
 
-public Action:Event_PlayerTeam(Handle:event, const String:name[], bool:dontBroadcast)
+public Action Event_PlayerChangeName(Event event, const char[] name, bool dontBroadcast)
 {
-	if (dontBroadcast)
-		return Plugin_Continue;
-	
-	// Don't broadcast team changes if they're being spammed.
-	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	
-	if (IS_CLIENT(client))
-	{
-		new Float:fGameTime = GetGameTime();
-		new team = GetEventInt(event, "team");
-		
-		if (team < 0 || team >= sizeof(g_fTeamJoinTime[]))
-			team = 0;
-		
-		if (g_fTeamJoinTime[client][team] > fGameTime)
-		{
-			SetEventBroadcast(event, true);
-		}
-		
-		g_fTeamJoinTime[client][team] = fGameTime + 30.0;
-	}
-	
-	return Plugin_Continue;
+    int client = GetClientOfUserId(GetEventInt(event, "userid"));
+
+    if (IS_CLIENT(client) && IsClientInGame(client) && !IsFakeClient(client) && ++g_iNameChanges[client] >= 5)
+    {
+        if (SMAC_CheatDetected(client, Detection_NameChangeSpam, INVALID_HANDLE) == Plugin_Continue)
+        {
+            SMAC_LogAction(client, "was kicked for name change spam.");
+            KickClient(client, "%t", "SMAC_CommandSpamKick");
+        }
+
+        g_iNameChanges[client] = 0;
+    }
 }
 
-public Event_PlayerChangeName(Handle:event, const String:name[], bool:dontBroadcast)
+public Action Event_AchievementEarned(Event event, const char[] name, bool dontBroadcast)
 {
-	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	
-	if (IS_CLIENT(client) && IsClientInGame(client) && !IsFakeClient(client) && ++g_iNameChanges[client] >= 5)
-	{
-		if (SMAC_CheatDetected(client, Detection_NameChangeSpam, INVALID_HANDLE) == Plugin_Continue)
-		{
-			SMAC_LogAction(client, "was kicked for name change spam.");
-			KickClient(client, "%t", "SMAC_CommandSpamKick");
-		}
-		
-		g_iNameChanges[client] = 0;
-	}
+    int client = GetEventInt(event, "player");
+
+    if (IS_CLIENT(client) && ++g_iAchievements[client] >= 5)
+    {
+        return Plugin_Stop;
+    }
+
+    return Plugin_Continue;
 }
 
-public Action:Event_AchievementEarned(Handle:event, const String:name[], bool:dontBroadcast)
+public Action Timer_DecreaseCount(Handle timer)
 {
-	new client = GetEventInt(event, "player");
-	
-	if (IS_CLIENT(client) && ++g_iAchievements[client] >= 5)
-	{
-		return Plugin_Stop;
-	}
-	
-	return Plugin_Continue;
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        if (g_iNameChanges[i])
+        {
+            g_iNameChanges[i]--;
+        }
+
+        if (g_iAchievements[i])
+        {
+        	g_iAchievements[i]--;
+        }
+    }
+
+    return Plugin_Continue;
 }
 
-public Action:Timer_DecreaseCount(Handle:timer)
+bool IsClientNameValid(int client)
 {
-	for (new i = 1; i <= MaxClients; i++)
-	{
-		if (g_iNameChanges[i])
-		{
-			g_iNameChanges[i]--;
-		}
-		
-		if (g_iAchievements[i])
-		{
-			g_iAchievements[i]--;
-		}
-	}
-	
-	return Plugin_Continue;
+    char sName[MAX_NAME_LENGTH], sChar;
+
+    GetClientName(client, sName, sizeof(sName));
+    int iSize = strlen(sName);
+
+    if (iSize < 2 || sName[0] == '&' || IsCharSpace(sName[0]) || IsCharSpace(sName[iSize-1]))
+    {
+        return false;
+    }
+
+    for (int i = 0; i < iSize; i++)
+    {
+        sChar = sName[i];
+
+        // Check unicode characters.
+        int bytes = IsCharMB(sChar);
+
+        if (bytes > 1)
+        {
+            if (!IsMBCharValid(sName[i], bytes))
+            {
+                return false;
+            }
+
+            i += bytes - 1;
+        }
+        else if (sChar < 32 || sChar == '%' || sChar == 0x7F)
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
-bool:IsClientNameValid(client)
+bool IsMBCharValid(const char[] mbchar,int numbytes)
 {
-	decl String:sName[MAX_NAME_LENGTH], String:sChar;
+    /*
+    * A blacklist of unicode characters.
+    * Mostly a variation of zero-width and spaces.
+    */
+    int wchar = UTF8ToWChar(mbchar, numbytes);
 
-	GetClientName(client, sName, sizeof(sName));
-	new iSize = strlen(sName);
+    if (wchar == -1)
+    {
+        return false;
+    }
 
-	if (iSize < 2 || sName[0] == '&' || IsCharSpace(sName[0]) || IsCharSpace(sName[iSize-1]))
-	{
-		return false;
-	}
+    // Check to see if any of these characters exist in the name.
+    // If so, it is not valid.
+    switch (wchar)
+    {
+        case
+            0x00AD,     // Soft Hyphen (shows as white space)
+            0x05BF,     // Hebrew Point Rafe
+            0x0670,     // Latin Small Letter Turned K
+            0x06E7,     // Arabic Small High Yeh
+            0x06E8,     // Arabic Small High Noon
+            0x0711,     // Caron
+            0x0A51,     // Gurmukhi Sign Udaat
+            0x0E31,     // Thai Character Mai Han-Akat
+            0x0EB1,     // Lao Vowel Sign Mai Kan
+            0x0EBB,     // Lao Vowel Sign Mai Kon
+            0x0EBC,     // Lao Semivowel Sign Lo
+            0x0F18,     // Tibetan Astrological Sign -Khyud Pa
+            0x0F19,     // Tibetan Astrological Sign Sdong Tshugs
+            0x0F35,     // Tibetan Mark Ngas Bzung Nyi Zla
+            0x0F37,     // Tibetan Mark Ngas Bzung Sgor Rtags
+            0x0F39,     // Tibetan Mark Tsa -Phru
+            0x135F,     // Ethiopic Combining Gemination Mark
+            0x18A9,     // Mongolian Letter Ali Gali Dagalga
+            0x20F0,     // Combining Asterisk Above
+            0x2800,     // Gujarati Abbreviation Sign
+            0x3000,     // Tamil Letter Sa
+            0x3164,     // Telugu (unicode group, no name, just white space)
+            0xFB1E,     // Hebrew Point Judeo-Spanish Varika
+            0xFEFF,     // Zero Width No-Break Space
+            0xFFA0:     // Halfwidth Hangul Filler (white space)
+                return false;
+    }
 
-	for (new i = 0; i < iSize; i++)
-	{
-		sChar = sName[i];
-		
-		// Check unicode characters.
-		new bytes = IsCharMB(sChar);
-		
-		if (bytes > 1)
-		{
-			if (!IsMBCharValid(sName[i], bytes))
-			{
-				return false;
-			}
-			
-			i += bytes - 1;
-		}
-		else if (sChar < 32 || sChar == '%' || sChar == 0x7F)
-		{
-			return false;
-		}
-	}
-	
-	return true;
+    // If any unicode characters in a players name are between any of these
+    // unicode values, it is not a valid character!
+    if ((0x0080 <= wchar <= 0x00A0) ||
+        (0x0300 <= wchar <= 0x036F) ||
+        (0x0483 <= wchar <= 0x0487) ||
+        (0x0591 <= wchar <= 0x05BD) ||
+        (0x05C1 <= wchar <= 0x05C5) ||
+        (0x0610 <= wchar <= 0x061A) ||
+        (0x064B <= wchar <= 0x065F) ||
+        (0x06D6 <= wchar <= 0x06DC) ||
+        (0x06DF <= wchar <= 0x06E4) ||
+        (0x06EA <= wchar <= 0x06ED) ||
+        (0x0730 <= wchar <= 0x074A) ||
+        (0x07A6 <= wchar <= 0x07B0) ||
+        (0x07EB <= wchar <= 0x07F3) ||
+        (0x0E34 <= wchar <= 0x0E3A) ||
+        (0x0E47 <= wchar <= 0x0E4E) ||
+        (0x0EB4 <= wchar <= 0x0EB9) ||
+        (0x0EC8 <= wchar <= 0x0ECD) ||
+        (0x0F71 <= wchar <= 0x0F7E) ||
+        (0x0F80 <= wchar <= 0x0F87) ||
+        (0x0F8D <= wchar <= 0x0F97) ||
+        (0x115A <= wchar <= 0x1160) ||
+        (0x11A3 <= wchar <= 0x11A7) ||
+        (0x180B <= wchar <= 0x180F) ||
+        (0x1DC0 <= wchar <= 0x1DCA) ||
+        (0x1DFC <= wchar <= 0x1DFF) ||
+        (0x2000 <= wchar <= 0x200F) ||
+        (0x2028 <= wchar <= 0x202F) ||
+        (0x205F <= wchar <= 0x206F) ||
+        (0x302A <= wchar <= 0x302D) ||
+        (0x3099 <= wchar <= 0x309A) ||
+        (0xFE20 <= wchar <= 0xFE26) ||
+        (0xFFF9 <= wchar <= 0xFFFF))
+        return false;
+
+    return true;
 }
 
-bool:IsMBCharValid(const String:mbchar[], numbytes)
+int UTF8ToWChar(const char[] mbchar,int numbytes)
 {
-	/*
-	* A blacklist of unicode characters.
-	* Mostly a variation of zero-width and spaces.
-	*/
-	new wchar = UTF8ToWChar(mbchar, numbytes);
-	
-	if (wchar == -1)
-		return false;
-	
-	switch (wchar)
-	{
-		case
-			0x00AD,
-			0x05BF,
-			0x0670,
-			0x06E7,
-			0x06E8,
-			0x0711,
-			0x0A51,
-			0x0E31,
-			0x0EB1,
-			0x0EBB,
-			0x0EBC,
-			0x0F18,
-			0x0F19,
-			0x0F35,
-			0x0F37,
-			0x0F39,
-			0x135F,
-			0x18A9,
-			0x20F0,
-			0x2800,
-			0x3000,
-			0x3164,
-			0xFB1E,
-			0xFEFF,
-			0xFFA0:
-				return false;
-	}
-	
-	if ((0x0080 <= wchar <= 0x00A0) ||
-		(0x0300 <= wchar <= 0x036F) ||
-		(0x0483 <= wchar <= 0x0487) ||
-		(0x0591 <= wchar <= 0x05BD) ||
-		(0x05C1 <= wchar <= 0x05C5) ||
-		(0x0610 <= wchar <= 0x061A) ||
-		(0x064B <= wchar <= 0x065F) ||
-		(0x06D6 <= wchar <= 0x06DC) ||
-		(0x06DF <= wchar <= 0x06E4) ||
-		(0x06EA <= wchar <= 0x06ED) ||
-		(0x0730 <= wchar <= 0x074A) ||
-		(0x07A6 <= wchar <= 0x07B0) ||
-		(0x07EB <= wchar <= 0x07F3) ||
-		(0x0E34 <= wchar <= 0x0E3A) ||
-		(0x0E47 <= wchar <= 0x0E4E) ||
-		(0x0EB4 <= wchar <= 0x0EB9) ||
-		(0x0EC8 <= wchar <= 0x0ECD) ||
-		(0x0F71 <= wchar <= 0x0F7E) ||
-		(0x0F80 <= wchar <= 0x0F87) ||
-		(0x0F8D <= wchar <= 0x0F97) ||
-		(0x115A <= wchar <= 0x1160) ||
-		(0x11A3 <= wchar <= 0x11A7) ||
-		(0x180B <= wchar <= 0x180F) ||
-		(0x1DC0 <= wchar <= 0x1DCA) ||
-		(0x1DFC <= wchar <= 0x1DFF) ||
-		(0x2000 <= wchar <= 0x200F) ||
-		(0x2028 <= wchar <= 0x202F) ||
-		(0x205F <= wchar <= 0x206F) ||
-		(0x302A <= wchar <= 0x302D) ||
-		(0x3099 <= wchar <= 0x309A) ||
-		(0xFE20 <= wchar <= 0xFE26) ||
-		(0xFFF9 <= wchar <= 0xFFFF))
-		return false;
-	
-	return true;
+    static const int mask[] = { 0, 0x7F, 0x1F, 0x0F, 0x07, 0x03, 0x01 };
+
+    if (numbytes > 6)
+    {
+        return -1;
+    }
+
+    // First byte minus length tag
+    int wchar = (mbchar[0] & mask[numbytes]);
+
+    for (int i = 1; i < numbytes; i++)
+    {
+        // Subsequent bytes must start with 10
+        if ((mbchar[i] & 0xC0) != 0x80)
+        {
+            return -1;
+        }
+
+        wchar <<= 6; // 6 bits of data in each subsequent byte
+        wchar |= (mbchar[i] & 0x3F);
+    }
+
+    return wchar;
 }
 
-UTF8ToWChar(const String:mbchar[], numbytes)
+bool IsConnectSpamming(const char[] ip)
 {
-	static const mask[] = { 0, 0x7F, 0x1F, 0x0F, 0x07, 0x03, 0x01 };
-	
-	if (numbytes > 6)
-		return -1;
-	
-	// First byte minus length tag
-	new wchar = (mbchar[0] & mask[numbytes]);
-	
-	for (new i = 1; i < numbytes; i++)
-	{
-		// Subsequent bytes must start with 10
-		if ((mbchar[i] & 0xC0) != 0x80)
-			return -1;
-		
-		wchar <<= 6; // 6 bits of data in each subsequent byte
-		wchar |= (mbchar[i] & 0x3F);
-	}
-	
-	return wchar;
+    if (!g_bMapStarted || !IsServerProcessing())
+    {
+        return false;
+    }
+
+    static Handle hIgnoreList = INVALID_HANDLE;
+
+    if (hIgnoreList == INVALID_HANDLE)
+    {
+        hIgnoreList = CreateTrie();
+    }
+
+    float fSpamTime = GetConVarFloat(g_hCvarConnectSpam);
+
+    if (fSpamTime > 0.0)
+    {
+        char sTempIP[17], dummy;
+
+        // Add any LAN IPs to the ignore list.
+        for (int i = 1; i <= MaxClients; i++)
+        {
+            if (IsClientAuthorized(i) && GetClientIP(i, sTempIP, sizeof(sTempIP)) && StrEqual(ip, sTempIP))
+            {
+                SetTrieValue(hIgnoreList, ip, 1);
+                break;
+            }
+        }
+
+        if (!GetTrieValue(hIgnoreList, ip, dummy))
+        {
+            if (GetTrieValue(g_hClientConnections, ip, dummy))
+            {
+                return true;
+            }
+            else if (SetTrieValue(g_hClientConnections, ip, 1))
+            {
+                CreateTimer(fSpamTime, Timer_AntiSpamConnect, IPToLong(ip));
+            }
+        }
+    }
+
+    return false;
 }
 
-bool:IsConnectSpamming(const String:ip[])
+bool ShouldLogIP(const char[] ip)
 {
-	if (!g_bMapStarted || !IsServerProcessing())
-		return false;
-	
-	static Handle:hIgnoreList = INVALID_HANDLE;
-	
-	if (hIgnoreList == INVALID_HANDLE)
-	{
-		hIgnoreList = CreateTrie();
-	}
-	
-	new Float:fSpamTime = GetConVarFloat(g_hCvarConnectSpam);
-	
-	if (fSpamTime > 0.0)
-	{
-		decl String:sTempIP[17], dummy;
-		
-		// Add any LAN IPs to the ignore list.
-		for (new i = 1; i <= MaxClients; i++)
-		{
-			if (IsClientAuthorized(i) && GetClientIP(i, sTempIP, sizeof(sTempIP)) && StrEqual(ip, sTempIP))
-			{
-				SetTrieValue(hIgnoreList, ip, 1);
-				break;
-			}
-		}
-		
-		if (!GetTrieValue(hIgnoreList, ip, dummy))
-		{
-			if (GetTrieValue(g_hClientConnections, ip, dummy))
-			{
-				return true;
-			}
-			else if (SetTrieValue(g_hClientConnections, ip, 1))
-			{
-				CreateTimer(fSpamTime, Timer_AntiSpamConnect, IPToLong(ip));
-			}
-		}
-	}
-	
-	return false;
+    /* Only log each IP once to prevent log spam. */
+    static Handle hLogList = INVALID_HANDLE;
+
+    if (hLogList == INVALID_HANDLE)
+    {
+        hLogList = CreateTrie();
+    }
+
+    int dummy;
+
+    if (GetTrieValue(hLogList, ip, dummy))
+    {
+        return false;
+    }
+
+    SetTrieValue(hLogList, ip, 1);
+    return true;
 }
 
-bool:ShouldLogIP(const String:ip[])
+public Action Timer_AntiSpamConnect(Handle timer, any ip)
 {
-	/* Only log each IP once to prevent log spam. */
-	static Handle:hLogList = INVALID_HANDLE;
-	
-	if (hLogList == INVALID_HANDLE)
-	{
-		hLogList = CreateTrie();
-	}
-	
-	decl dummy;
-	
-	if (GetTrieValue(hLogList, ip, dummy))
-	{
-		return false;
-	}
-	
-	SetTrieValue(hLogList, ip, 1);
-	return true;
-}
+    char sIP[17];
+    LongToIP(ip, sIP, sizeof(sIP));
+    RemoveFromTrie(g_hClientConnections, sIP);
 
-public Action:Timer_AntiSpamConnect(Handle:timer, any:ip)
-{
-	decl String:sIP[17];
-	LongToIP(ip, sIP, sizeof(sIP));
-	RemoveFromTrie(g_hClientConnections, sIP);
-
-	return Plugin_Stop;
+    return Plugin_Stop;
 }

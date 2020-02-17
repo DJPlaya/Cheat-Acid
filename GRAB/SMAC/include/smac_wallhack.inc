@@ -16,7 +16,6 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 #if defined _smac_wallhack_included
   #endinput
 #endif
@@ -31,7 +30,7 @@
  * @noreturn
  * @error				If the client is not InGame or the index is invalid.
  */
-native SMAC_WH_SetClientIgnore(client, bool:bIgnore);
+native void SMAC_WH_SetClientIgnore(int client, bool bIgnore);
 
 /**
  * Returns whether a client is ignored from visibility tests.
@@ -40,24 +39,24 @@ native SMAC_WH_SetClientIgnore(client, bool:bIgnore);
  * @return				True if client is ignored from visibility tests, false otherwise.
  * @error				If the client is not connected or the index is invalid.
  */
-native bool:SMAC_WH_GetClientIgnore(client);
+native bool SMAC_WH_GetClientIgnore(int client);
 
 
 public SharedPlugin:__pl_smac_wallhack = 
 {
-	name = "smac_wallhack",
-	file = "smac_wallhack.smx",
+    name = "smac_wallhack",
+    file = "smac_wallhack.smx",
 #if defined REQUIRE_PLUGIN
-	required = 1,
+    required = 1,
 #else
-	required = 0,
+    required = 0,
 #endif
 };
 
 #if !defined REQUIRE_PLUGIN
 public __pl_smac_wallhack_SetNTVOptional()
 {
-	MarkNativeAsOptional("SMAC_WH_SetClientIgnore");
-	MarkNativeAsOptional("SMAC_WH_GetClientIgnore");
+    MarkNativeAsOptional("SMAC_WH_SetClientIgnore");
+    MarkNativeAsOptional("SMAC_WH_GetClientIgnore");
 }
 #endif

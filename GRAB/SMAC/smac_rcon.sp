@@ -1,8 +1,8 @@
 /*
     SourceMod Anti-Cheat
-    Copyright (C) 2011-2016 SMAC Development Team
+    Copyright (C) 2011-2016 SMAC Development Team 
     Copyright (C) 2007-2011 CodingDirect LLC
-	
+   
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -16,185 +16,177 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 #pragma semicolon 1
+#pragma newdecls required
 
 /* SM Includes */
 #include <sourcemod>
 #include <smac>
 #undef REQUIRE_EXTENSIONS
-#tryinclude <smrcon>
-#undef REQUIRE_PLUGIN
-#tryinclude <updater>
+#tryinclude <smrcon> 
 
 /* Plugin Info */
-public Plugin:myinfo =
+public Plugin myinfo =
 {
-	name = "SMAC Rcon Locker",
-	author = SMAC_AUTHOR,
-	description = "Protects against rcon crashes and exploits",
-	version = SMAC_VERSION,
-	url = SMAC_URL
+    name =          "SMAC Rcon Locker",
+    author =        SMAC_AUTHOR,
+    description =   "Protects against rcon crashes and exploits",
+    version =       SMAC_VERSION,
+    url =           SMAC_URL
 };
 
 /* Globals */
-#define UPDATE_URL	"http://smac.sx/updater/smac_rcon.txt"
+ConVar g_hCvarRconPass = null;
+char g_sRconRealPass[128];
+bool g_bRconLocked = false;
 
-new Handle:g_hCvarRconPass = INVALID_HANDLE;
-new String:g_sRconRealPass[128];
-new bool:g_bRconLocked = false;
-
-new Handle:g_hWhitelist = INVALID_HANDLE;
-new bool:g_bSMrconLoaded = false;
+Handle g_hWhitelist = INVALID_HANDLE;
+bool g_bSMrconLoaded = false;
 
 /* Plugin Functions */
-public OnPluginStart()
+public void OnPluginStart()
 {
-	// Convars.
-	g_hCvarRconPass = FindConVar("rcon_password");
-	HookConVarChange(g_hCvarRconPass, OnRconPassChanged);
-	
-	// SM RCon.
-	g_hWhitelist = CreateTrie();
-	g_bSMrconLoaded = LibraryExists("smrcon");
-	
-	RegAdminCmd("smac_rcon_addip", Command_AddIP, ADMFLAG_ROOT, "Adds an IP address to the rcon whitelist.");
-	RegAdminCmd("smac_rcon_removeip", Command_RemoveIP, ADMFLAG_ROOT, "Removes an IP address from the rcon whitelist.");
-
-#if defined _updater_included
-	if (LibraryExists("updater"))
-	{
-		Updater_AddPlugin(UPDATE_URL);
-	}
-#endif
-	
+    // Convars.
+    g_hCvarRconPass = FindConVar("rcon_password");
+    HookConVarChange(g_hCvarRconPass, OnRconPassChanged);
+    
+    // SM RCon.
+    g_hWhitelist = CreateTrie();
+    g_bSMrconLoaded = LibraryExists("smrcon");
+    
+    RegAdminCmd("smac_rcon_addip", Command_AddIP, ADMFLAG_ROOT, "Adds an IP address to the rcon whitelist.");
+    RegAdminCmd("smac_rcon_removeip", Command_RemoveIP, ADMFLAG_ROOT, "Removes an IP address from the rcon whitelist.");
 }
 
-public OnLibraryAdded(const String:name[])
+public void OnLibraryAdded(const char[] name)
 {
-	if (StrEqual(name, "updater"))
-	{
-#if defined _updater_included
-		Updater_AddPlugin(UPDATE_URL);
-#endif
-	}
-	else if (StrEqual(name, "smrcon"))
-	{
-		g_bSMrconLoaded = true;
-	}
+    if (StrEqual(name, "smrcon"))
+    {
+        g_bSMrconLoaded = true;
+    }
 }
 
-public OnLibraryRemoved(const String:name[])
+public void OnLibraryRemoved(const char[] name)
 {
-	if (StrEqual(name, "smrcon"))
-	{
-		ClearTrie(g_hWhitelist);
-		g_bSMrconLoaded = false;
-	}
+    if (StrEqual(name, "smrcon"))
+    {
+        ClearTrie(g_hWhitelist);
+        g_bSMrconLoaded = false;
+    }
 }
 
-public OnConfigsExecuted()
+public void OnConfigsExecuted()
 {
-	if (!g_bRconLocked)
-	{
-		GetConVarString(g_hCvarRconPass, g_sRconRealPass, sizeof(g_sRconRealPass));
-		g_bRconLocked = true;
-	}
+    if (!g_bRconLocked)
+    {
+        GetConVarString(g_hCvarRconPass, g_sRconRealPass, sizeof(g_sRconRealPass));
+        g_bRconLocked = true;
+    }
 }
 
-public OnRconPassChanged(Handle:convar, const String:oldValue[], const String:newValue[])
+public void OnRconPassChanged(ConVar convar, char[] oldValue, char[] newValue)
 {
-	if (g_bRconLocked && !StrEqual(newValue, g_sRconRealPass))
-	{
-		SMAC_Log("Rcon password changed to \"%s\". Reverting back to original config value.", newValue);
-		SetConVarString(g_hCvarRconPass, g_sRconRealPass);
-	}
+    if (g_bRconLocked && !StrEqual(newValue, g_sRconRealPass))
+    {
+        SMAC_Log("Rcon password changed to \"%s\". Reverting back to original config value.", newValue);
+        SetConVarString(g_hCvarRconPass, g_sRconRealPass);
+    }
 }
 
-public Action:Command_AddIP(client, args)
+public Action Command_AddIP(int client,int args)
 {
-	if (!g_bSMrconLoaded)
-	{
-		ReplyToCommand(client, "This feature requires the SM RCon extension to be loaded.");
-		return Plugin_Handled;
-	}
-	
-	if (args != 1)
-	{
-		ReplyToCommand(client, "Usage: smac_rcon_addip <ip>");
-		return Plugin_Handled;
-	}
+    if (!g_bSMrconLoaded)
+    {
+        ReplyToCommand(client, "This feature requires the SM RCon extension to be loaded.");
+        return Plugin_Handled;
+    }
 
-	decl String:sIP[32];
-	GetCmdArg(1, sIP, sizeof(sIP));
+    if (args != 1)
+    {
+        ReplyToCommand(client, "Usage: smac_rcon_addip <ip>");
+        return Plugin_Handled;
+    }
 
-	if (SetTrieValue(g_hWhitelist, sIP, 1, false))
-	{
-		if (GetTrieSize(g_hWhitelist) == 1)
-			ReplyToCommand(client, "Rcon whitelist enabled.");
-		
-		ReplyToCommand(client, "You have successfully added %s to the rcon whitelist.", sIP);
-	}
-	else
-	{
-		ReplyToCommand(client, "%s already exists in the rcon whitelist.", sIP);
-	}
-	
-	return Plugin_Handled;
+    char sIP[32];
+    GetCmdArg(1, sIP, sizeof(sIP));
+
+    if (SetTrieValue(g_hWhitelist, sIP, 1, false))
+    {
+        if (GetTrieSize(g_hWhitelist) == 1)
+        {
+            ReplyToCommand(client, "Rcon whitelist enabled.");
+        }
+        
+        ReplyToCommand(client, "You have successfully added %s to the rcon whitelist.", sIP);
+    }
+    else
+    {
+        ReplyToCommand(client, "%s already exists in the rcon whitelist.", sIP);
+    }
+    
+    return Plugin_Handled;
 }
 
-public Action:Command_RemoveIP(client, args)
+public Action Command_RemoveIP(int client,int args)
 {
-	if (!g_bSMrconLoaded)
-	{
-		ReplyToCommand(client, "This feature requires the SM RCon extension to be loaded.");
-		return Plugin_Handled;
-	}
-	
-	if (args != 1)
-	{
-		ReplyToCommand(client, "Usage: smac_rcon_removeip <ip>");
-		return Plugin_Handled;
-	}
+    if (!g_bSMrconLoaded)
+    {
+        ReplyToCommand(client, "This feature requires the SM RCon extension to be loaded.");
+        return Plugin_Handled;
+    }
 
-	decl String:sIP[32];
-	GetCmdArg(1, sIP, sizeof(sIP));
+    if (args != 1)
+    {
+        ReplyToCommand(client, "Usage: smac_rcon_removeip <ip>");
+        return Plugin_Handled;
+    }
 
-	if (RemoveFromTrie(g_hWhitelist, sIP))
-	{
-		ReplyToCommand(client, "You have successfully removed %s from the rcon whitelist.", sIP);
-		
-		if (!GetTrieSize(g_hWhitelist))
-			ReplyToCommand(client, "Rcon whitelist disabled.");
-	}
-	else
-	{
-		ReplyToCommand(client, "%s is not in the rcon whitelist.", sIP);
-	}
-	
-	return Plugin_Handled;
+    char sIP[32];
+    GetCmdArg(1, sIP, sizeof(sIP));
+
+    if (RemoveFromTrie(g_hWhitelist, sIP))
+    {
+        ReplyToCommand(client, "You have successfully removed %s from the rcon whitelist.", sIP);
+        
+        if (!GetTrieSize(g_hWhitelist))
+        {
+            ReplyToCommand(client, "Rcon whitelist disabled.");
+        }
+    }
+    else
+    {
+        ReplyToCommand(client, "%s is not in the rcon whitelist.", sIP);
+    }
+
+    return Plugin_Handled;
 }
 
-public Action:SMRCon_OnAuth(rconId, const String:address[], const String:password[], &bool:allow)
+public Action SMRCon_OnAuth(int rconId, const char[] address, const char[] password, bool& allow)
 {
-	// Check against whitelist before continuing.
-	decl dummy;
-	
-	if (!GetTrieSize(g_hWhitelist) || GetTrieValue(g_hWhitelist, address, dummy))
-		return Plugin_Continue;
-	
-	allow = false;
-	return Plugin_Changed;
+    // Check against whitelist before continuing.
+    int dummy;
+
+    if (!GetTrieSize(g_hWhitelist) || GetTrieValue(g_hWhitelist, address, dummy))
+    {
+        return Plugin_Continue;
+    }
+
+    SMAC_Log("Unauthorized RCON Login Detected! Failed auth from address: \"%s\", attempted password: \"%s\"", address, password);
+    allow = false;
+    return Plugin_Changed;
 }
 
-public Action:SMRCon_OnCommand(rconId, const String:address[], const String:command[], &bool:allow)
+public Action SMRCon_OnCommand(int rconId, const char[] address, const char[] command, bool& allow)
 {
-	// Check against whitelist before continuing.
-	decl dummy;
-	
-	if (!GetTrieSize(g_hWhitelist) || GetTrieValue(g_hWhitelist, address, dummy))
-		return Plugin_Continue;
-	
-	allow = false;
-	return Plugin_Changed;
+    // Check against whitelist before continuing.
+    int dummy;
+    
+    if (!GetTrieSize(g_hWhitelist) || GetTrieValue(g_hWhitelist, address, dummy))
+    {
+        return Plugin_Continue;
+    }
+
+    SMAC_Log("Unauthorized RCON command use detected! Failed auth from address: \"%s\", attempted command: \"%s\"", address, command);
+    allow = false;
+    return Plugin_Changed;
 }
