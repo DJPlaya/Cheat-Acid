@@ -1,0 +1,58 @@
+"Phrases"
+{
+    "HOTGUARD_TAGCHAT"
+	{
+		"en"		"[HotGuard] "
+		"ru"		"[HotGuard] "
+		"de"		"[HotGuard] "
+	}
+	
+	"HOTGUARD_TAGBAN"
+	{
+		"en"		"[HotGuard] "
+		"ru"		"[HotGuard] "
+		"de"		"[HotGuard] "
+	}
+	
+	"HOTGUARD_Analyz"
+	{
+		"ru"		"Анализируем Игрока:"
+		"en"		"Analyz Player:"
+		"de"		"Spieler analysieren:"
+	}
+
+	"HOTGUARD_BAN"
+	{
+		"ru"		" Пожалуйста, выключите читы."
+		"en"		" Please turn off cheats."
+		"de"		" Bitte schalten Sie ihre Cheats aus."
+	}
+	
+	"HOTGUARD_BANLOG"
+	{
+		"ru"		"БАН"
+		"en"		"BAN"
+		"de"		"BAN"
+	}
+	
+	"HOTGUARD_SUSPECTLOG"
+	{
+		"ru"		"ПОДОЗРЕВАЕМЫЙ"
+		"en"		"SUSPECT"
+		"de"		"Verdacht"
+	}
+	
+	"HOTGUARD_SUSPECTLOG"
+	{
+		"ru"		"ПОДОЗРЕВАЕМЫЙ"
+		"en"		"SUSPECT"
+		"de"		"Verdacht"
+	}
+	
+	"HOTGUARD_DOUBLEIP_KICK"
+	{
+		"ru"		"Две авторизации на одном IP"
+		"en"		"Double IP"
+		"de"		"doppelte IP"
+	}
+}
