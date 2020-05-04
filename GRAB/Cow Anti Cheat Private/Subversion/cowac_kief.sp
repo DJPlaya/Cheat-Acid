@@ -3,13 +3,14 @@
 #define PLUGIN_VERSION "1.0-KiefEdition"
 
 #include <sdktools>
-#include <sourcebanspp>
 #include <smlib/clients>
 
+native void SBPP_BanPlayer(int iAdmin, int iTarget, int iTime, const char[] sReason); // #include <sourcebanspp> // Too lazy for includes
+
 ConVar g_hDealWith_Macro, g_hDealWith_AutoHotKey, g_hWarn_TriggerAimBot;
-float prev_sidemove[MAXPLAYERS], g_fJumpPos[MAXPLAYERS];
-int g_iprev_buttons[MAXPLAYERS], g_iCmdNum[MAXPLAYERS], g_iPerfectStrafes[MAXPLAYERS], g_iJumpsSent[MAXPLAYERS], g_iBhop[MAXPLAYERS], g_iSilentStrafe[MAXPLAYERS], g_iMacro[MAXPLAYERS], g_iMousedx_Value[MAXPLAYERS], g_iMousedx_Count[MAXPLAYERS], g_iAutoHotKey[MAXPLAYERS], g_iTicksOnPlayer[MAXPLAYERS], g_iPrev_TicksOnPlayer[MAXPLAYERS], g_iTriggerBotCount[MAXPLAYERS];
-bool g_bTurn[MAXPLAYERS], g_bOnGround[MAXPLAYERS], g_bAutoBhopEnabled[MAXPLAYERS];
+float prev_sidemove[MAXPLAYERS + 1], g_fJumpPos[MAXPLAYERS + 1];
+int g_iprev_buttons[MAXPLAYERS + 1], g_iCmdNum[MAXPLAYERS + 1], g_iPerfectStrafes[MAXPLAYERS + 1], g_iJumpsSent[MAXPLAYERS + 1], g_iBhop[MAXPLAYERS + 1], g_iSilentStrafe[MAXPLAYERS + 1], g_iMacro[MAXPLAYERS + 1], g_iMousedx_Value[MAXPLAYERS + 1], g_iMousedx_Count[MAXPLAYERS + 1], g_iAutoHotKey[MAXPLAYERS + 1], g_iTicksOnPlayer[MAXPLAYERS + 1], g_iPrev_TicksOnPlayer[MAXPLAYERS + 1], g_iTriggerBotCount[MAXPLAYERS + 1];
+bool g_bTurn[MAXPLAYERS + 1], g_bOnGround[MAXPLAYERS + 1], g_bAutoBhopEnabled[MAXPLAYERS + 1];
 
 
 public Plugin myinfo = 
@@ -20,6 +21,13 @@ public Plugin myinfo =
 	version = PLUGIN_VERSION, 
 	url = "FunForBattle"
 };
+
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, err_max)
+{
+	MarkNativeAsOptional("SBPP_BanPlayer");
+	
+	return APLRes_Success;
+}
 
 public void OnPluginStart()
 {
@@ -106,7 +114,7 @@ public Action OnPlayerRunCmd(int client, int &buttons, int &impulse, float vel[3
 		{
 			float pos[3];
 			GetClientAbsOrigin(client, pos);
-			g_fJumpPos[client] = pos[client];
+			g_fJumpPos[client] = pos[2];
 		}
 		
 		float vOrigin[3];
@@ -359,7 +367,12 @@ void CowAC_Ban(int iClient, char[] cReason)
 {
 	char message[128], cIP[64];
 	Format(message, 128, "You have been kicked for using '%s'", cReason); // TODO: Change to "banned"
-	KickClient(iClient, message); // TODO: This this out // SBPP_BanPlayer(0, iClient, 0, message);
+	if (LibraryExists("sourcebans++"))
+		SBPP_BanPlayer(0, iClient, 1440, message); // 1 Day
+		
+	else
+		BanClient(iClient, 1440, BANFLAG_AUTO, cReason, message, "CowACKief", 0); // 1 Day
+		
 	GetClientIP(iClient, cIP, sizeof(cIP));
 	CowAC_Log("[Ban] '%L'<%s> was banned for '%s'", iClient, cIP, cReason);
 	
