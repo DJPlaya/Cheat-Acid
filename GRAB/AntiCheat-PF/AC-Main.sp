@@ -1,7 +1,7 @@
 #include <sourcemod>
 #include <AC-Helper>
 
-#define WEBHOOK "https://discordapp.com/api/webhooks/661122011057356801/_F3mx35nEoljhrIrm6WTKr52PH6J-A-e2MCInOvHQ1HyRgr0l0P4UdFZZfEojn8UIYiJ/slack"
+#define WEBHOOK "#"
 
 #pragma newdecls required
 #pragma semicolon 1
